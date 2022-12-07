@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:vendetodo/models/Producto.dart';
 import 'package:http/http.dart' as http;
@@ -18,18 +19,20 @@ class _MyAppState extends State<MyApp> {
   late Future<List<Producto>> _listaProductos;
 
   Future<List<Producto>> getProductos() async {
+    //Modificar url del responde para prueba local.
     final response =
-        await http.get(Uri.parse('https://valorant-api.com/v1/bundles'));
+        await http.get(Uri.parse('http://192.168.1.5:8000/api/listaProductos'));
     List<Producto> listaProductos = [];
     if (response.statusCode == 200) {
       String body = utf8.decode(response.bodyBytes);
       final jsonData = jsonDecode(body);
       for (var item in jsonData['data']) {
         listaProductos.add(Producto(
-            id: item['uuid'],
-            nombre: item['displayName'],
-            descripcion: item['description'],
-            imagen: item['displayIcon']));
+            id: item['producto_nombre'],
+            nombre: item['producto_nombre'],
+            descripcion: item['proveedor_nombre'],
+            imagen: item['producto_imagen'].toString(),
+            cantidad_disponible: item['cantidad_disponible']));
       }
       return listaProductos;
     } else {
@@ -66,31 +69,47 @@ class _MyAppState extends State<MyApp> {
             if (snapshot.hasData) {
               return ListView.builder(
                 itemBuilder: (BuildContext context, int index) {
-                  return ListTile(
-                    title: Text(snapshot.data![index].nombre),
-                    subtitle: Text(snapshot.data![index].descripcion),
-                    //snapshot.data![index].imagen,
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(10), // Image border
-                      child: SizedBox.fromSize(
-                        child: Image.network(snapshot.data![index].imagen,
-                            fit: BoxFit.cover, width: 80, height: 80),
-                      ),
+                  return Container(
+                    margin: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: const Color.fromARGB(255, 54, 104, 255),
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    contentPadding: const EdgeInsets.all(10),
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => DetalleProducto(
-                                  producto: snapshot.data![index])));
-                    },
+                    child: ListTile(
+                      title: Text(snapshot.data![index].nombre,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.bold)),
+                      subtitle: Text(snapshot.data![index].descripcion,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Roboto',
+                          )),
+                      //snapshot.data![index].imagen,
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(20), // Image border
+                        child: SizedBox.fromSize(
+                          child: Image.network(snapshot.data![index].imagen,
+                              fit: BoxFit.contain, width: 80, height: 80),
+                        ),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios,
+                          color: Colors.white),
+                      contentPadding: const EdgeInsets.all(10),
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DetalleProducto(
+                                    producto: snapshot.data![index])));
+                      },
+                    ),
                   );
                 },
               );
             } else if (snapshot.hasError) {
-              return const Text("Error");
+              return Text(snapshot.error.toString());
             }
             return const Center(child: CircularProgressIndicator());
           },
@@ -123,19 +142,20 @@ class DetalleProducto extends StatelessWidget {
             borderRadius: BorderRadius.circular(25), // Image border
             child: SizedBox.fromSize(
               child: Image.network(producto.imagen,
-                  fit: BoxFit.cover, width: 380, height: 300),
+                  fit: BoxFit.contain, width: 380, height: 350),
             ),
           ),
           const Padding(padding: EdgeInsets.all(15)),
           Container(
-            width: 300,
-            height: 60,
+            width: 330,
+            height: 100,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 36, 98, 174),
+              color: const Color.fromARGB(255, 54, 104, 255),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text.rich(
+              textAlign: TextAlign.center,
               TextSpan(
                 text: 'Producto: ',
                 style: const TextStyle(
@@ -151,18 +171,22 @@ class DetalleProducto extends StatelessWidget {
           ),
           const Padding(padding: EdgeInsets.all(10)),
           Container(
-            width: 300,
-            height: 60,
+            margin: const EdgeInsets.only(left: 10),
+            width: 330,
+            height: 100,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Color.fromARGB(255, 36, 98, 174),
+              color: const Color.fromARGB(255, 54, 104, 255),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text.rich(
+              textAlign: TextAlign.center,
               TextSpan(
-                text: 'Descripción: ',
+                text: 'Proveedores: ',
                 style: const TextStyle(
-                    fontSize: 20, color: Colors.white), // default text style
+                    fontSize: 20,
+                    color: Colors.white,
+                    letterSpacing: sqrt1_2), // default text style
                 children: <TextSpan>[
                   TextSpan(
                       text: producto.descripcion,
@@ -178,19 +202,19 @@ class DetalleProducto extends StatelessWidget {
             height: 60,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 36, 98, 174),
+              color: const Color.fromARGB(255, 54, 104, 255),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text.rich(
+            child: Text.rich(
               TextSpan(
                 text: 'Disponibilidad: ',
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 20, color: Colors.white), // default text style
                 children: <TextSpan>[
                   TextSpan(
-                      text: "# de unidades",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                      text: producto.cantidad_disponible.toString(),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 20)),
                 ],
               ),
             ),

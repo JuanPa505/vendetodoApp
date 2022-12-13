@@ -21,7 +21,7 @@ class _MyAppState extends State<MyApp> {
   Future<List<Producto>> getProductos() async {
     //Modificar url del responde para prueba local.
     final response =
-        await http.get(Uri.parse('http://192.168.1.5:8000/api/listaProductos'));
+        await http.get(Uri.parse('http://74.208.181.167/api/listaProductos'));
     List<Producto> listaProductos = [];
     if (response.statusCode == 200) {
       String body = utf8.decode(response.bodyBytes);
@@ -170,32 +170,6 @@ class DetalleProducto extends StatelessWidget {
             ),
           ),
           const Padding(padding: EdgeInsets.all(10)),
-          Container(
-            margin: const EdgeInsets.only(left: 10),
-            width: 330,
-            height: 100,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 54, 104, 255),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text.rich(
-              textAlign: TextAlign.center,
-              TextSpan(
-                text: 'Proveedores: ',
-                style: const TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    letterSpacing: sqrt1_2), // default text style
-                children: <TextSpan>[
-                  TextSpan(
-                      text: producto.descripcion,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 20)),
-                ],
-              ),
-            ),
-          ),
           const Padding(padding: EdgeInsets.all(10)),
           Container(
             width: 320,
